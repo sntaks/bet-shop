@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Shop;
+use App\Models\User;
 use App\Services\KadiResult;
 use App\Services\KadiShopApi;
 use Illuminate\Http\Client\Request;
@@ -10,13 +12,32 @@ use Illuminate\Support\Facades\Http;
 const SHOP_API_KEY = 'shop-key-secret-x9Qa';
 
 beforeEach(function () {
-    config(['kadi.url' => 'https://kadi.test/api/v1/', 'kadi.key' => SHOP_API_KEY]);
+    config(['kadi.url' => 'https://kadi.test/api/v1/']);
+    $this->shop = Shop::factory()->create(['api_key' => SHOP_API_KEY]);
 });
 
 function kadiApi(): KadiShopApi
 {
-    return app(KadiShopApi::class);
+    return KadiShopApi::forShop(test()->shop);
 }
+
+it('acts for the logged-in user\'s shop with that shop\'s key', function () {
+    Http::fake(['kadi.test/*' => Http::response(['success' => true, 'data' => shopMe()])]);
+    $otherShop = Shop::factory()->create(['api_key' => 'other-shop-key-0001']);
+
+    $this->actingAs(User::factory()->cashier()->create(['shop_id' => $otherShop->id]));
+    app(KadiShopApi::class)->me();
+
+    Http::assertSent(fn (Request $request): bool => $request->header('X-API-KEY') === ['other-shop-key-0001']);
+});
+
+it('makes no call at all for a user with no shop', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    expect(app(KadiShopApi::class)->me()->is(KadiResult::NO_SHOP))->toBeTrue();
+
+    Http::assertNothingSent();
+});
 
 it('sends the shop key as JSON to the configured KadiApi', function () {
     Http::fake(['kadi.test/*' => Http::response(['success' => true, 'data' => ['shop_no' => 'S101', 'float_balance' => 12500.00]])]);

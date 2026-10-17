@@ -12,10 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * Who did what at this desk, and what KadiApi answered. Never holds a pickup code, a password
- * or the API key.
+ * Who did what, at which shop, and what KadiApi answered. Never holds a pickup code, a password
+ * or an API key. Managers read their own shop's entries; admins read every shop's.
  *
  * @property int $id
+ * @property int|null $shop_id
  * @property int|null $user_id
  * @property ActivityAction $action
  * @property string|null $subject_id The KadiApi load_id or withdrawal_id, or a local id.
@@ -27,10 +28,11 @@ use Illuminate\Support\Carbon;
  * @property array<string, mixed>|null $details
  * @property string|null $ip_address
  * @property Carbon $created_at
+ * @property-read Shop|null $shop
  * @property-read User|null $user
  */
 #[Table(name: 'activity_log')]
-#[Fillable(['user_id', 'action', 'subject_id', 'player_no', 'amount', 'http_status', 'api_code', 'idempotency_key', 'details', 'ip_address'])]
+#[Fillable(['shop_id', 'user_id', 'action', 'subject_id', 'player_no', 'amount', 'http_status', 'api_code', 'idempotency_key', 'details', 'ip_address'])]
 class ActivityLog extends Model
 {
     /** @use HasFactory<ActivityLogFactory> */
@@ -39,18 +41,28 @@ class ActivityLog extends Model
     public const null UPDATED_AT = null;
 
     /**
-     * Record an action by the logged-in staff member (or the given user) from this request.
+     * Record an action by the logged-in user (or the given user) from this request, against
+     * their shop (or the given shop).
      *
-     * @param  array{user_id?: int|null, subject_id?: string|null, player_no?: string|null, amount?: int|float|string|null, http_status?: int|null, api_code?: string|null, idempotency_key?: string|null, details?: array<string, mixed>|null}  $attributes
+     * @param  array{shop_id?: int|null, user_id?: int|null, subject_id?: string|null, player_no?: string|null, amount?: int|float|string|null, http_status?: int|null, api_code?: string|null, idempotency_key?: string|null, details?: array<string, mixed>|null}  $attributes
      */
     public static function record(ActivityAction $action, array $attributes = []): self
     {
         return self::query()->create([
+            'shop_id' => auth()->user()?->shop_id,
             'user_id' => auth()->id(),
             'ip_address' => request()->ip(),
             ...$attributes,
             'action' => $action,
         ]);
+    }
+
+    /**
+     * @return BelongsTo<Shop, $this>
+     */
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     /**

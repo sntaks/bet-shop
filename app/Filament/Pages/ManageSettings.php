@@ -45,7 +45,7 @@ class ManageSettings extends Page
 
     public function mount(): void
     {
-        $this->form->fill(ShopSetting::current()->only(['low_float_threshold', 'idle_lock_minutes']));
+        $this->form->fill(ShopSetting::forShop(auth()->user()?->shop)->only(['low_float_threshold', 'idle_lock_minutes']));
     }
 
     public function form(Schema $schema): Schema
@@ -94,7 +94,7 @@ class ManageSettings extends Page
     {
         abort_unless(static::canAccess(), 403);
 
-        $settings = ShopSetting::current();
+        $settings = ShopSetting::forShop(auth()->user()?->shop);
         $settings->fill($this->form->getState());
 
         if ($settings->isDirty()) {

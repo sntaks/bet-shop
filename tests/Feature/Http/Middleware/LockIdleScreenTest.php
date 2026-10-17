@@ -10,7 +10,7 @@ beforeEach(function () {
 });
 
 it('locks the screen after the idle minutes in settings and keeps the page to return to', function () {
-    ShopSetting::current()->update(['idle_lock_minutes' => 5]);
+    ShopSetting::forShop($this->cashier->shop)->update(['idle_lock_minutes' => 5]);
 
     $this->actingAs($this->cashier)
         ->withSession([LockIdleScreen::LAST_ACTIVITY => now()->subMinutes(5)->getTimestamp()])

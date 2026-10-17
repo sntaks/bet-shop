@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Shop;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,13 +20,14 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Define the model's default state: a member of a new shop's staff.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
+            'shop_id' => Shop::factory(),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
@@ -49,6 +51,15 @@ class UserFactory extends Factory
     public function manager(): static
     {
         return $this->afterCreating(fn (User $user) => $user->assignRole(RoleSeeder::MANAGER));
+    }
+
+    /**
+     * Indicate that the user is a platform admin, who belongs to no shop. Needs RoleSeeder to have run.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => ['shop_id' => null])
+            ->afterCreating(fn (User $user) => $user->assignRole(RoleSeeder::ADMIN));
     }
 
     /**

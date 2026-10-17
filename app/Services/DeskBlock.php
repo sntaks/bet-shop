@@ -5,9 +5,9 @@ namespace App\Services;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Whether KadiApi has shut this desk out: the shop is suspended or closed, or the key is wrong.
- * Set by any answer that says so and cleared by any successful one, so the whole panel is
- * blocked from the first refusal until "Check again" gets through.
+ * Whether KadiApi has shut a shop out: the shop is suspended or closed, or its key is wrong. Set
+ * by any answer that says so and cleared by any successful one, so that shop's screens are
+ * blocked from the first refusal until "Check again" gets through. Other shops are unaffected.
  */
 class DeskBlock
 {
@@ -17,9 +17,7 @@ class DeskBlock
 
     public const string NOT_SHOP_KEY = 'not_shop_key';
 
-    private const string CACHE_KEY = 'kadi:desk-block';
-
-    public static function recordFrom(KadiResult $result): void
+    public static function recordFrom(KadiResult $result, int $shopId): void
     {
         $reason = match (true) {
             $result->blocksShop() => self::SHOP_NOT_ACTIVE,
@@ -29,22 +27,34 @@ class DeskBlock
         };
 
         if ($reason !== null) {
-            Cache::forever(self::CACHE_KEY, $reason);
+            Cache::forever(self::cacheKey($shopId), $reason);
         } elseif ($result->ok()) {
-            Cache::forget(self::CACHE_KEY);
+            Cache::forget(self::cacheKey($shopId));
         }
     }
 
-    public static function reason(): ?string
+    /**
+     * Lift the block, e.g. after the shop's key was replaced with one KadiApi accepted.
+     */
+    public static function clear(int $shopId): void
     {
-        $reason = Cache::get(self::CACHE_KEY);
+        Cache::forget(self::cacheKey($shopId));
+    }
+
+    public static function reason(?int $shopId): ?string
+    {
+        if ($shopId === null) {
+            return null;
+        }
+
+        $reason = Cache::get(self::cacheKey($shopId));
 
         return is_string($reason) ? $reason : null;
     }
 
-    public static function isBlocked(): bool
+    public static function isBlocked(?int $shopId): bool
     {
-        return self::reason() !== null;
+        return self::reason($shopId) !== null;
     }
 
     /**
@@ -57,5 +67,10 @@ class DeskBlock
             self::INVALID_KEY => "This desk's key is not valid. Contact Kadi Kings.",
             default => "This desk's key is not a shop key. Contact Kadi Kings to issue one.",
         };
+    }
+
+    private static function cacheKey(int $shopId): string
+    {
+        return "kadi:desk-block:{$shopId}";
     }
 }

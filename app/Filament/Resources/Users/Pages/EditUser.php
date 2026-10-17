@@ -7,6 +7,7 @@ use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\ActivityLog;
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Filament\Resources\Pages\EditRecord;
 
 /**
@@ -28,6 +29,23 @@ class EditUser extends EditRecord
             ...$data,
             'role' => $this->record->getRoleNames()->first(),
         ];
+    }
+
+    /**
+     * Only an admin moves someone to another shop, never themselves; an admin belongs to no shop.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (! UserForm::actorIsAdmin() || UserForm::isCurrentUser($this->record)) {
+            unset($data['shop_id']);
+        } elseif (($this->data['role'] ?? null) === RoleSeeder::ADMIN) {
+            $data['shop_id'] = null;
+        }
+
+        return $data;
     }
 
     protected function beforeSave(): void
@@ -55,6 +73,7 @@ class EditUser extends EditRecord
 
         if ($changes !== []) {
             ActivityLog::record(ActivityAction::StaffUpdated, [
+                'shop_id' => $this->record->shop_id,
                 'subject_id' => (string) $this->record->getKey(),
                 'details' => ['email' => $this->record->email, ...$changes],
             ]);

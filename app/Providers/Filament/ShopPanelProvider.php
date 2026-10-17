@@ -68,7 +68,7 @@ class ShopPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_END,
                 fn (): ?View => auth()->check() && ! request()->routeIs('filament.shop.unlock')
                     ? view('filament.hooks.idle-lock', [
-                        'lockAfterMinutes' => ShopSetting::current()->idle_lock_minutes,
+                        'lockAfterMinutes' => ShopSetting::forShop(auth()->user()?->shop)->idle_lock_minutes,
                         'unlockUrl' => route('filament.shop.unlock'),
                     ])
                     : null,

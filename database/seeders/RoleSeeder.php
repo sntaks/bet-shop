@@ -8,8 +8,10 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
- * The fixed staff roles and what each may do. Safe to run again: it creates what is missing and
- * resets each role to exactly these permissions. Run it on deploy whenever this list changes.
+ * The fixed roles and what each may do. Cashiers and managers belong to one shop and act only
+ * for it; admins (the platform owner) belong to no shop: they add shops and their staff and read
+ * every shop's activity, but never work a counter. Safe to run again: it creates what is missing
+ * and resets each role to exactly these permissions. Run it on deploy whenever this list changes.
  */
 class RoleSeeder extends Seeder
 {
@@ -17,12 +19,24 @@ class RoleSeeder extends Seeder
 
     public const string MANAGER = 'manager';
 
+    public const string ADMIN = 'admin';
+
+    /**
+     * The roles a shop's own staff can have.
+     *
+     * @var array<string, string>
+     */
+    public const array SHOP_ROLE_LABELS = [
+        self::CASHIER => 'Cashier',
+        self::MANAGER => 'Manager',
+    ];
+
     /**
      * @var array<string, string>
      */
     public const array LABELS = [
-        self::CASHIER => 'Cashier',
-        self::MANAGER => 'Manager',
+        ...self::SHOP_ROLE_LABELS,
+        self::ADMIN => 'Admin',
     ];
 
     /**
@@ -43,6 +57,11 @@ class RoleSeeder extends Seeder
             'withdrawals.pay',
             'withdrawals.reject',
             'settings.manage',
+            'users.manage',
+            'activity-log.view',
+        ],
+        self::ADMIN => [
+            'shops.manage',
             'users.manage',
             'activity-log.view',
         ],

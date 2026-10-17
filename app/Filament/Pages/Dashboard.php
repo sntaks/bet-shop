@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Concerns\HandlesKadiResults;
+use App\Filament\Resources\Shops\ShopResource;
 use App\Models\ShopSetting;
 use App\Services\KadiShopApi;
 use Filament\Actions\Action;
@@ -28,9 +29,23 @@ class Dashboard extends BaseDashboard
 
     public int $lowFloatThreshold = ShopSetting::DEFAULT_LOW_FLOAT_THRESHOLD;
 
+    /**
+     * Admins belong to no shop, so their home is the list of shops.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->shop_id !== null;
+    }
+
     public function mount(): void
     {
-        $this->lowFloatThreshold = ShopSetting::current()->low_float_threshold;
+        if (auth()->user()?->shop_id === null) {
+            $this->redirect(ShopResource::getUrl());
+
+            return;
+        }
+
+        $this->lowFloatThreshold = ShopSetting::forShop(auth()->user()->shop)->low_float_threshold;
 
         $this->loadShop();
     }

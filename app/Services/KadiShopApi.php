@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Illuminate\Container\Attributes\Config;
+use App\Models\Shop;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
@@ -10,12 +10,14 @@ use Illuminate\Support\Facades\Log;
 use SensitiveParameter;
 
 /**
- * The only way this app talks to KadiApi: the /shop/* routes, with this shop's API key.
+ * The only way this app talks to KadiApi: the /shop/* routes, with one shop's API key. Resolved
+ * from the container it acts for the logged-in user's shop (see AppServiceProvider); a user with
+ * no shop gets no calls made at all.
  *
  * Every call returns a KadiResult and never throws. Nothing is retried automatically: a write
  * is retried only when the cashier asks, with the same Idempotency-Key, so it never happens
- * twice. The key is read here and nowhere else, and is never logged. Every answer updates the
- * DeskBlock, so a suspended shop or a bad key blocks the whole panel.
+ * twice. The key is read here and nowhere else, and is never logged. Every answer updates that
+ * shop's DeskBlock, so a suspended shop or a bad key blocks its staff's screens.
  */
 class KadiShopApi
 {
@@ -24,9 +26,26 @@ class KadiShopApi
     private const int CONNECT_TIMEOUT_SECONDS = 5;
 
     public function __construct(
-        #[Config('kadi.url')] private readonly string $baseUrl,
-        #[Config('kadi.key'), SensitiveParameter] private readonly ?string $apiKey,
+        private readonly string $baseUrl,
+        #[SensitiveParameter] private readonly ?string $apiKey,
+        private readonly ?int $shopId = null,
     ) {}
+
+    /**
+     * Act for this shop, or for nobody when there is no shop.
+     */
+    public static function forShop(?Shop $shop): self
+    {
+        return new self((string) config('kadi.url'), $shop?->api_key, $shop?->getKey());
+    }
+
+    /**
+     * Act with a key that belongs to no saved shop yet, e.g. to check a key before saving it.
+     */
+    public static function forKey(#[SensitiveParameter] string $apiKey): self
+    {
+        return new self((string) config('kadi.url'), $apiKey);
+    }
 
     /**
      * The shop, its float, today's loads and the load limits.
@@ -122,6 +141,10 @@ class KadiShopApi
      */
     private function send(string $method, string $path, array $body = [], array $query = [], ?string $idempotencyKey = null): KadiResult
     {
+        if (blank($this->apiKey)) {
+            return KadiResult::noShop();
+        }
+
         $request = $this->request();
 
         if ($idempotencyKey !== null) {
@@ -144,7 +167,9 @@ class KadiShopApi
 
         $result = KadiResult::fromResponse($response);
 
-        DeskBlock::recordFrom($result);
+        if ($this->shopId !== null) {
+            DeskBlock::recordFrom($result, $this->shopId);
+        }
 
         if (! $result->ok()) {
             Log::warning('KadiApi refused a request', [

@@ -25,7 +25,7 @@ class EnsureDeskIsNotBlocked
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (DeskBlock::isBlocked() && ! $request->routeIs(...self::OPEN_WHILE_BLOCKED)) {
+        if (DeskBlock::isBlocked(auth()->user()?->shop_id) && ! $request->routeIs(...self::OPEN_WHILE_BLOCKED)) {
             return redirect()->route('filament.shop.blocked');
         }
 

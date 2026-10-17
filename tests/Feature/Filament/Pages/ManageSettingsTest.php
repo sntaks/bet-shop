@@ -33,21 +33,24 @@ it('saves the settings and records what changed', function () {
         ->assertHasNoFormErrors()
         ->assertNotified('Settings saved');
 
-    expect(ShopSetting::current()->low_float_threshold)->toBe(5000);
+    expect(ShopSetting::forShop($manager->shop)->low_float_threshold)->toBe(5000)
+        ->and(ShopSetting::forShop(User::factory()->manager()->create()->shop)->low_float_threshold)->toBe(ShopSetting::DEFAULT_LOW_FLOAT_THRESHOLD);
 
     $log = ActivityLog::sole();
     expect($log->action)->toBe(ActivityAction::SettingsUpdated)
         ->and($log->user_id)->toBe($manager->id)
+        ->and($log->shop_id)->toBe($manager->shop_id)
         ->and($log->details)->toBe(['low_float_threshold' => ['from' => 2000, 'to' => 5000]]);
 });
 
 it('refuses an idle lock outside 1 to 120 minutes', function (int $minutes) {
-    $this->actingAs(User::factory()->manager()->create());
+    $manager = User::factory()->manager()->create();
+    $this->actingAs($manager);
 
     Livewire::test(ManageSettings::class)
         ->fillForm(['idle_lock_minutes' => $minutes])
         ->call('save')
         ->assertHasFormErrors(['idle_lock_minutes']);
 
-    expect(ShopSetting::current()->idle_lock_minutes)->toBe(ShopSetting::DEFAULT_IDLE_LOCK_MINUTES);
+    expect(ShopSetting::forShop($manager->shop)->idle_lock_minutes)->toBe(ShopSetting::DEFAULT_IDLE_LOCK_MINUTES);
 })->with([0, 121]);

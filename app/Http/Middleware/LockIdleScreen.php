@@ -75,6 +75,6 @@ class LockIdleScreen
             return false;
         }
 
-        return now()->getTimestamp() - $lastActivity >= ShopSetting::current()->idle_lock_minutes * 60;
+        return now()->getTimestamp() - $lastActivity >= ShopSetting::forShop(auth()->user()?->shop)->idle_lock_minutes * 60;
     }
 }
