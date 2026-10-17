@@ -14,7 +14,8 @@ use SensitiveParameter;
  *
  * Every call returns a KadiResult and never throws. Nothing is retried automatically: a write
  * is retried only when the cashier asks, with the same Idempotency-Key, so it never happens
- * twice. The key is read here and nowhere else, and is never logged.
+ * twice. The key is read here and nowhere else, and is never logged. Every answer updates the
+ * DeskBlock, so a suspended shop or a bad key blocks the whole panel.
  */
 class KadiShopApi
 {
@@ -142,6 +143,8 @@ class KadiShopApi
         }
 
         $result = KadiResult::fromResponse($response);
+
+        DeskBlock::recordFrom($result);
 
         if (! $result->ok()) {
             Log::warning('KadiApi refused a request', [

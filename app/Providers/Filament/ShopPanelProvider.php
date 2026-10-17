@@ -2,6 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\Unlock;
+use App\Filament\Pages\BlockedDesk;
+use App\Http\Middleware\EnsureDeskIsNotBlocked;
+use App\Http\Middleware\LockIdleScreen;
+use App\Models\ShopSetting;
+use Filament\Actions\Action;
 use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -11,11 +17,15 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
@@ -45,6 +55,25 @@ class ShopPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->authenticatedRoutes(function (): void {
+                Route::get('unlock', Unlock::class)->name('unlock');
+                Route::get('blocked', BlockedDesk::class)->name('blocked');
+            })
+            ->userMenuItems([
+                Action::make('lockScreen')
+                    ->label('Lock screen')
+                    ->icon(Heroicon::OutlinedLockClosed)
+                    ->url(fn (): string => route('filament.shop.unlock')),
+            ])
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): ?View => auth()->check() && ! request()->routeIs('filament.shop.unlock')
+                    ? view('filament.hooks.idle-lock', [
+                        'lockAfterMinutes' => ShopSetting::current()->idle_lock_minutes,
+                        'unlockUrl' => route('filament.shop.unlock'),
+                    ])
+                    : null,
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -58,6 +87,8 @@ class ShopPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+                LockIdleScreen::class,
+                EnsureDeskIsNotBlocked::class,
+            ], isPersistent: true);
     }
 }
