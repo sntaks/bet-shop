@@ -47,7 +47,7 @@ class Withdrawals extends Page implements HasTable
         'expired' => 'Expired',
     ];
 
-    private const string PENDING_COUNT_CACHE_KEY = 'kadi:pending-withdrawals';
+    private const string PENDING_COUNT_CACHE_PREFIX = 'kadi:pending-withdrawals:';
 
     private const int PENDING_COUNT_SECONDS = 30;
 
@@ -159,7 +159,7 @@ class Withdrawals extends Page implements HasTable
     public static function pendingCount(): ?int
     {
         try {
-            $count = Cache::remember(self::PENDING_COUNT_CACHE_KEY, self::PENDING_COUNT_SECONDS, function (): int|false {
+            $count = Cache::remember(self::pendingCountCacheKey(), self::PENDING_COUNT_SECONDS, function (): int|false {
                 $result = app(KadiShopApi::class)->withdrawals('pending', 1, 1);
 
                 return $result->ok() ? ($result->pagination()['total'] ?? count($result->items())) : false;
@@ -169,6 +169,11 @@ class Withdrawals extends Page implements HasTable
         }
 
         return is_int($count) ? $count : null;
+    }
+
+    private static function pendingCountCacheKey(): string
+    {
+        return self::PENDING_COUNT_CACHE_PREFIX.(auth()->user()->shop_id ?? 'none');
     }
 
     public function mount(KadiShopApi $api): void
@@ -197,7 +202,7 @@ class Withdrawals extends Page implements HasTable
                 ->label('Refresh')
                 ->icon(Heroicon::OutlinedArrowPath)
                 ->color('gray')
-                ->action(fn () => Cache::forget(self::PENDING_COUNT_CACHE_KEY)),
+                ->action(fn () => Cache::forget(self::pendingCountCacheKey())),
         ];
     }
 
@@ -323,7 +328,7 @@ class Withdrawals extends Page implements HasTable
                 $this->shop['float_balance'] = $result->data['float_balance'];
             }
 
-            Cache::forget(self::PENDING_COUNT_CACHE_KEY);
+            Cache::forget(self::pendingCountCacheKey());
 
             return;
         }
@@ -355,7 +360,7 @@ class Withdrawals extends Page implements HasTable
         }
 
         $this->payClosed = true;
-        Cache::forget(self::PENDING_COUNT_CACHE_KEY);
+        Cache::forget(self::pendingCountCacheKey());
 
         $this->payError = match (true) {
             $result->is('too_many_attempts') => 'Too many wrong codes. Kadi Kings cancelled the request and gave the money back to the player.',
@@ -430,7 +435,7 @@ class Withdrawals extends Page implements HasTable
             $this->resetPayment();
         }
 
-        Cache::forget(self::PENDING_COUNT_CACHE_KEY);
+        Cache::forget(self::pendingCountCacheKey());
 
         Notification::make()
             ->title('Rejected')
@@ -476,7 +481,7 @@ class Withdrawals extends Page implements HasTable
         $pagination = $result->ok() ? $result->pagination() : null;
 
         if ($this->status === 'pending' && ! $searching && $pagination !== null) {
-            Cache::put(self::PENDING_COUNT_CACHE_KEY, $pagination['total'], self::PENDING_COUNT_SECONDS);
+            Cache::put(self::pendingCountCacheKey(), $pagination['total'], self::PENDING_COUNT_SECONDS);
         }
 
         if ($searching) {

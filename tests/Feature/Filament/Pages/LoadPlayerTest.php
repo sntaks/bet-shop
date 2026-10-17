@@ -274,5 +274,5 @@ it('never puts the API key in the page', function () {
 
     $this->get(route('filament.shop.pages.load'))
         ->assertOk()
-        ->assertDontSee(config('kadi.key'));
+        ->assertDontSee(auth()->user()->shop->api_key);
 });

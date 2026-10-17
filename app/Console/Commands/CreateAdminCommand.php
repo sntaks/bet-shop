@@ -16,12 +16,13 @@ use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
 
 /**
- * Registration is off, so the first manager is made here (seeding the staff roles first if they
- * are missing); managers add everyone else in the panel.
+ * Registration is off, so the first platform admin is made here (seeding the roles first if they
+ * are missing). Admins belong to no shop: in the panel they add shops and each shop's managers,
+ * who add their own cashiers.
  */
-#[Signature('staff:create-manager {--name= : The manager\'s name} {--email= : The email they log in with} {--password= : Their password (prompted for when left out)}')]
-#[Description('Create a manager account for the shop panel')]
-class CreateManagerCommand extends Command
+#[Signature('staff:create-admin {--name= : The admin\'s name} {--email= : The email they log in with} {--password= : Their password (prompted for when left out)}')]
+#[Description('Create a platform admin account')]
+class CreateAdminCommand extends Command
 {
     /**
      * Execute the console command.
@@ -52,12 +53,13 @@ class CreateManagerCommand extends Command
 
         $user = User::create([
             ...$validator->validated(),
+            'shop_id' => null,
             'is_active' => true,
         ]);
 
-        $user->assignRole(RoleSeeder::MANAGER);
+        $user->assignRole(RoleSeeder::ADMIN);
 
-        $this->components->info("Manager [{$user->email}] created.");
+        $this->components->info("Admin [{$user->email}] created.");
 
         return self::SUCCESS;
     }

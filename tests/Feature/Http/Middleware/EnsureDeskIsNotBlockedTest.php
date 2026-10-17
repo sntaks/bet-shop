@@ -1,20 +1,21 @@
 <?php
 
 use App\Models\User;
+use App\Services\DeskBlock;
+use App\Services\KadiResult;
 use App\Services\KadiShopApi;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    config(['kadi.url' => 'https://kadi.test/api/v1', 'kadi.key' => 'shop-key']);
     $this->cashier = User::factory()->cashier()->create();
+    $this->actingAs($this->cashier);
 });
 
-it('shows the blocked page instead of every screen once KadiApi refuses the desk', function (int $status, array $body, string $message) {
+it('shows the blocked page instead of every screen once KadiApi refuses the shop', function (int $status, array $body, string $message) {
     Http::fake(['kadi.test/*' => Http::response($body, $status)]);
-    app(KadiShopApi::class)->me();
+    app(KadiShopApi::class)->lookupPlayer('12345671');
 
-    $this->actingAs($this->cashier)
-        ->get(route('filament.shop.pages.dashboard'))
+    $this->get(route('filament.shop.pages.loads'))
         ->assertRedirect(route('filament.shop.blocked'));
 
     $this->get(route('filament.shop.blocked'))
@@ -35,8 +36,7 @@ it('lets every screen through again after a successful answer', function () {
     app(KadiShopApi::class)->me();
     app(KadiShopApi::class)->me();
 
-    $this->actingAs($this->cashier)
-        ->get(route('filament.shop.pages.dashboard'))
+    $this->get(route('filament.shop.pages.dashboard'))
         ->assertOk();
 });
 
@@ -44,10 +44,21 @@ it('does not block the desk for an ordinary refusal or an unreachable KadiApi', 
     Http::fake(['kadi.test/*' => $response]);
     app(KadiShopApi::class)->lookupPlayer('12345678');
 
-    $this->actingAs($this->cashier)
-        ->get(route('filament.shop.pages.dashboard'))
-        ->assertOk();
+    expect(DeskBlock::isBlocked($this->cashier->shop_id))->toBeFalse();
 })->with([
     'player not found' => fn () => Http::response(['code' => 'player_not_found', 'message' => 'No player has that number'], 404),
     'connection failed' => fn () => Http::failedConnection(),
 ]);
+
+it('blocks only the shop KadiApi refused', function () {
+    $otherShopCashier = User::factory()->cashier()->create();
+    DeskBlock::recordFrom(new KadiResult(403, 'shop_not_active', 'This shop is suspended. Contact Kadi Kings.'), $otherShopCashier->shop_id);
+    Http::fake(['kadi.test/api/v1/shop/me' => Http::response(['success' => true, 'data' => shopMe()])]);
+
+    $this->get(route('filament.shop.pages.dashboard'))
+        ->assertOk();
+
+    $this->actingAs($otherShopCashier)
+        ->get(route('filament.shop.pages.dashboard'))
+        ->assertRedirect(route('filament.shop.blocked'));
+});

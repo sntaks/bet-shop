@@ -9,6 +9,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * The activity log, read-only, for managers (ActivityLogPolicy).
@@ -28,6 +29,19 @@ class ActivityLogResource extends Resource
     protected static ?string $slug = 'activity-log';
 
     protected static ?int $navigationSort = 92;
+
+    /**
+     * A manager reads their own shop's entries only; an admin reads every shop's.
+     *
+     * @return Builder<ActivityLog>
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+
+        return ActivityLog::query()
+            ->when(! ($user?->isAdmin() ?? false), fn (Builder $query): Builder => $query->where('shop_id', $user->shop_id ?? 0));
+    }
 
     public static function table(Table $table): Table
     {

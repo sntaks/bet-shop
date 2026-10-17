@@ -11,14 +11,15 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed the application's database. Shops are added in the panel (or with shop:create),
+     * because their keys must be real KadiApi keys.
      */
     public function run(): void
     {
         $this->call(RoleSeeder::class);
 
-        User::factory()->manager()->create([
-            'name' => 'Test Manager',
+        User::factory()->admin()->create([
+            'name' => 'Test Admin',
             'email' => 'test@example.com',
         ]);
     }

@@ -17,7 +17,7 @@ trait HandlesKadiResults
      */
     protected function handledCommonOutcome(KadiResult $result): bool
     {
-        if (DeskBlock::isBlocked()) {
+        if (DeskBlock::isBlocked(auth()->user()?->shop_id)) {
             $this->redirect(route('filament.shop.blocked'));
 
             return true;

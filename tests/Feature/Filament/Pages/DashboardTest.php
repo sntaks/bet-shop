@@ -23,7 +23,7 @@ it('shows the float, how to buy more and today\'s loads', function () {
 });
 
 it('warns when the float is below the threshold in settings', function () {
-    ShopSetting::current()->update(['low_float_threshold' => 15000]);
+    ShopSetting::forShop(auth()->user()->shop)->update(['low_float_threshold' => 15000]);
     Http::fake(['kadi.test/api/v1/shop/me' => Http::response(['success' => true, 'data' => shopMe()])]);
 
     $this->get(route('filament.shop.pages.dashboard'))
@@ -53,5 +53,5 @@ it('never puts the API key in the page', function () {
 
     $this->get(route('filament.shop.pages.dashboard'))
         ->assertOk()
-        ->assertDontSee(config('kadi.key'));
+        ->assertDontSee(auth()->user()->shop->api_key);
 });

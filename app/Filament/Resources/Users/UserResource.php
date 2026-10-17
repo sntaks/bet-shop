@@ -13,10 +13,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
- * The shop's staff, for managers (UserPolicy). Staff are deactivated, never deleted, so the
- * activity log keeps their names.
+ * Staff, for managers (their own shop's only) and admins (every shop's, and other admins);
+ * see UserPolicy. Staff are deactivated, never deleted, so the activity log keeps their names.
  */
 class UserResource extends Resource
 {
@@ -35,6 +36,20 @@ class UserResource extends Resource
     protected static ?int $navigationSort = 91;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    /**
+     * A manager sees their own shop's staff only; another shop's staff member is a 404.
+     *
+     * @return Builder<User>
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+
+        return User::query()
+            ->with(['roles', 'shop'])
+            ->when(! ($user?->isAdmin() ?? false), fn (Builder $query): Builder => $query->where('shop_id', $user->shop_id ?? 0));
+    }
 
     public static function form(Schema $schema): Schema
     {

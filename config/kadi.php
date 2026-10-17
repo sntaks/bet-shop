@@ -7,16 +7,13 @@ return [
     | KadiApi
     |--------------------------------------------------------------------------
     |
-    | The base URL of KadiApi (ending in /api/v1) and this shop's API key, issued
-    | by Kadi Kings under Bet Shops. The key only works on the /shop/* routes and
-    | always acts for this shop. It stays on the server: only App\Services\KadiShopApi
-    | reads it.
+    | The base URL of KadiApi (ending in /api/v1). Each shop's own API key, issued
+    | by Kadi Kings under Bet Shops, is stored encrypted on its row in the shops
+    | table (added by an admin) and only ever read by App\Services\KadiShopApi.
     |
     */
 
     'url' => env('KADI_API_URL', 'https://api.kadi-kings.co.ke/api/v1'),
-
-    'key' => env('KADI_SHOP_API_KEY'),
 
     /*
     |--------------------------------------------------------------------------

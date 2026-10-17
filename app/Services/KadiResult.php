@@ -16,6 +16,11 @@ final readonly class KadiResult
     public const string UNREACHABLE = 'unreachable';
 
     /**
+     * The `code` given when no request was made because the user has no shop (and so no key).
+     */
+    public const string NO_SHOP = 'no_shop';
+
+    /**
      * @param  int|null  $status  The HTTP status, or null when no response came back.
      * @param  array<string, mixed>  $data  The response's `data`.
      * @param  array<string, list<string>>  $errors  Field errors from a 422.
@@ -55,6 +60,15 @@ final readonly class KadiResult
             status: null,
             code: self::UNREACHABLE,
             message: 'Kadi Kings could not be reached.',
+        );
+    }
+
+    public static function noShop(): self
+    {
+        return new self(
+            status: null,
+            code: self::NO_SHOP,
+            message: 'This account is not linked to a shop.',
         );
     }
 

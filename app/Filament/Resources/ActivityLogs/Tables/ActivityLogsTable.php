@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ActivityLogs\Tables;
 
 use App\Enums\ActivityAction;
+use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Models\ActivityLog;
 use Carbon\CarbonImmutable;
 use Filament\Forms\Components\DatePicker;
@@ -17,12 +18,17 @@ class ActivityLogsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('user'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['user', 'shop']))
             ->columns([
                 TextColumn::make('created_at')
                     ->label('When')
                     ->dateTime('d M Y, H:i:s')
                     ->sortable(),
+                TextColumn::make('shop.shop_no')
+                    ->label('Shop')
+                    ->fontFamily('mono')
+                    ->placeholder('—')
+                    ->visible(fn (): bool => UserForm::actorIsAdmin()),
                 TextColumn::make('user.name')
                     ->label('Staff')
                     ->placeholder('—'),
@@ -56,9 +62,14 @@ class ActivityLogsTable
             ->filters([
                 SelectFilter::make('action')
                     ->options(ActivityAction::class),
+                SelectFilter::make('shop')
+                    ->relationship('shop', 'shop_no')
+                    ->visible(fn (): bool => UserForm::actorIsAdmin()),
                 SelectFilter::make('user')
                     ->label('Staff')
-                    ->relationship('user', 'name'),
+                    ->relationship('user', 'name', fn (Builder $query): Builder => UserForm::actorIsAdmin()
+                        ? $query
+                        : $query->where('shop_id', auth()->user()->shop_id ?? 0)),
                 Filter::make('created_at')
                     ->schema([
                         DatePicker::make('from'),

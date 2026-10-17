@@ -20,7 +20,7 @@ class BlockedDesk extends SimplePage
 {
     public function mount(): void
     {
-        if (! DeskBlock::isBlocked()) {
+        if (! DeskBlock::isBlocked(auth()->user()?->shop_id)) {
             $this->redirect(Filament::getUrl());
         }
     }
@@ -41,7 +41,7 @@ class BlockedDesk extends SimplePage
             ->action(function (KadiShopApi $api): void {
                 $result = $api->me();
 
-                if (! DeskBlock::isBlocked()) {
+                if (! DeskBlock::isBlocked(auth()->user()?->shop_id)) {
                     $this->redirect(Filament::getUrl());
 
                     return;
@@ -80,7 +80,7 @@ class BlockedDesk extends SimplePage
 
     public function getHeading(): string|Htmlable
     {
-        return DeskBlock::message(DeskBlock::reason() ?? DeskBlock::SHOP_NOT_ACTIVE);
+        return DeskBlock::message(DeskBlock::reason(auth()->user()?->shop_id) ?? DeskBlock::SHOP_NOT_ACTIVE);
     }
 
     public function getSubheading(): string|Htmlable|null

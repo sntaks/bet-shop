@@ -16,6 +16,8 @@ enum ActivityAction: string implements HasColor, HasLabel
     case StaffCreated = 'staff_created';
     case StaffUpdated = 'staff_updated';
     case SettingsUpdated = 'settings_updated';
+    case ShopCreated = 'shop_created';
+    case ShopUpdated = 'shop_updated';
     case PlayerLoaded = 'player_loaded';
     case LoadRefused = 'load_refused';
     case LoadOutcomeUnknown = 'load_outcome_unknown';
@@ -28,6 +30,8 @@ enum ActivityAction: string implements HasColor, HasLabel
     public function getLabel(): string
     {
         return match ($this) {
+            self::ShopCreated => 'Shop added',
+            self::ShopUpdated => 'Shop changed',
             self::WithdrawalPaid => 'Withdrawal paid',
             self::WithdrawalPayRefused => 'Withdrawal not paid',
             self::WithdrawalPayOutcomeUnknown => 'Withdrawal payment not confirmed',
@@ -52,7 +56,7 @@ enum ActivityAction: string implements HasColor, HasLabel
             self::WithdrawalRejected => 'warning',
             self::LoginFailed, self::LoadRefused, self::LoadOutcomeUnknown, self::WithdrawalPayRefused,
             self::WithdrawalPayOutcomeUnknown, self::WithdrawalRejectFailed => 'danger',
-            self::StaffCreated, self::StaffUpdated, self::SettingsUpdated => 'warning',
+            self::StaffCreated, self::StaffUpdated, self::SettingsUpdated, self::ShopCreated, self::ShopUpdated => 'warning',
             default => 'gray',
         };
     }

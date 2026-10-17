@@ -6,18 +6,20 @@ use Database\Factories\ShopSettingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * This desk's settings: a single row, created with the defaults the first time it is read.
+ * A shop's settings: one row per shop, created with the defaults the first time it is read.
  *
  * @property int $id
+ * @property int $shop_id
  * @property int $low_float_threshold Whole shillings; the dashboard warns when the float is below it.
  * @property int $idle_lock_minutes The screen locks after this many minutes without a request.
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['low_float_threshold', 'idle_lock_minutes'])]
+#[Fillable(['shop_id', 'low_float_threshold', 'idle_lock_minutes'])]
 class ShopSetting extends Model
 {
     /** @use HasFactory<ShopSettingFactory> */
@@ -35,9 +37,20 @@ class ShopSetting extends Model
         'idle_lock_minutes' => self::DEFAULT_IDLE_LOCK_MINUTES,
     ];
 
-    public static function current(): self
+    /**
+     * The shop's settings, or the defaults (unsaved) for a user with no shop, such as an admin.
+     */
+    public static function forShop(?Shop $shop): self
     {
-        return self::query()->firstOrCreate();
+        return $shop === null ? new self : self::query()->firstOrCreate(['shop_id' => $shop->getKey()]);
+    }
+
+    /**
+     * @return BelongsTo<Shop, $this>
+     */
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Shop;
 use App\Models\ShopSetting;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -18,6 +19,7 @@ class ShopSettingFactory extends Factory
     public function definition(): array
     {
         return [
+            'shop_id' => Shop::factory(),
             'low_float_threshold' => ShopSetting::DEFAULT_LOW_FLOAT_THRESHOLD,
             'idle_lock_minutes' => ShopSetting::DEFAULT_IDLE_LOCK_MINUTES,
         ];

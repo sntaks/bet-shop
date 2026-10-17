@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Services\KadiShopApi;
 use Carbon\CarbonImmutable;
 use Filament\Support\Facades\FilamentTimezone;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -16,7 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // KadiApi is always called with the logged-in user's shop key; no shop, no calls.
+        $this->app->bind(KadiShopApi::class, function (): KadiShopApi {
+            $user = Auth::user();
+
+            return KadiShopApi::forShop($user instanceof User ? $user->shop : null);
+        });
     }
 
     /**
