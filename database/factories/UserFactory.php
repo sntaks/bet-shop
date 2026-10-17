@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -29,32 +30,34 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'is_active' => true,
             'remember_token' => Str::random(10),
-            'two_factor_secret' => null,
-            'two_factor_recovery_codes' => null,
-            'two_factor_confirmed_at' => null,
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Indicate that the user is a cashier. Needs RoleSeeder to have run.
      */
-    public function unverified(): static
+    public function cashier(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return $this->afterCreating(fn (User $user) => $user->assignRole(RoleSeeder::CASHIER));
     }
 
     /**
-     * Indicate that the model has two-factor authentication configured.
+     * Indicate that the user is a manager. Needs RoleSeeder to have run.
      */
-    public function withTwoFactor(): static
+    public function manager(): static
+    {
+        return $this->afterCreating(fn (User $user) => $user->assignRole(RoleSeeder::MANAGER));
+    }
+
+    /**
+     * Indicate that the user has been deactivated.
+     */
+    public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
-            'two_factor_secret' => encrypt('secret'),
-            'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
-            'two_factor_confirmed_at' => now(),
+            'is_active' => false,
         ]);
     }
 }

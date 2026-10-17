@@ -1,9 +1,9 @@
 <?php
 
 use App\Providers\AppServiceProvider;
-use App\Providers\FortifyServiceProvider;
+use App\Providers\Filament\ShopPanelProvider;
 
 return [
     AppServiceProvider::class,
-    FortifyServiceProvider::class,
+    ShopPanelProvider::class,
 ];
