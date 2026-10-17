@@ -29,7 +29,8 @@ it('shows the blocked page instead of every screen once KadiApi refuses the desk
 it('lets every screen through again after a successful answer', function () {
     Http::fakeSequence('kadi.test/*')
         ->push(['code' => 'shop_not_active', 'message' => 'This shop is suspended. Contact Kadi Kings.'], 403)
-        ->push(['success' => true, 'data' => []]);
+        ->push(['success' => true, 'data' => shopMe()])
+        ->whenEmpty(Http::response(['success' => true, 'data' => shopMe()]));
 
     app(KadiShopApi::class)->me();
     app(KadiShopApi::class)->me();

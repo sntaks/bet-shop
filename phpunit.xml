@@ -32,5 +32,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="KADI_API_URL" value="https://kadi.test/api/v1"/>
+        <env name="KADI_SHOP_API_KEY" value="test-shop-key-x9Qa"/>
     </php>
 </phpunit>
