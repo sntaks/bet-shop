@@ -3,6 +3,7 @@
 use App\Http\Middleware\LockIdleScreen;
 use App\Models\ShopSetting;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     $this->cashier = User::factory()->cashier()->create();
@@ -20,6 +21,8 @@ it('locks the screen after the idle minutes in settings and keeps the page to re
 });
 
 it('keeps the screen open while the staff member is active', function () {
+    Http::fake(['kadi.test/api/v1/shop/me' => Http::response(['success' => true, 'data' => shopMe()])]);
+
     $this->actingAs($this->cashier)
         ->withSession([LockIdleScreen::LAST_ACTIVITY => now()->subMinutes(9)->getTimestamp()])
         ->get(route('filament.shop.pages.dashboard'))

@@ -44,7 +44,22 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * The `data` of a GET /shop/me answer, with any keys replaced.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function shopMe(array $overrides = []): array
 {
-    // ..
+    return array_replace_recursive([
+        'shop_no' => 'S101',
+        'name' => 'Kariobangi Bet Shop',
+        'location' => 'Kariobangi North',
+        'status' => 'active',
+        'float_balance' => 12500.00,
+        'float_bill_ref' => 'SHOP-S101',
+        'today' => ['loads' => 4, 'gross_amount' => 3800.00],
+        'load_limits' => ['min_amount' => 50, 'max_amount' => 20000, 'daily_limit_per_player' => 50000],
+    ], $overrides);
 }

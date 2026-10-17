@@ -1,0 +1,121 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../resources/views/components/**/*';
+
+/*
+ * Kadi Kings brand (see the kadi site's DESIGN.md): gold is the only accent, on near-black,
+ * with ivory text. Cinzel for amounts and ceremony, Outfit for everything readable.
+ * Fonts are self-hosted under SIL OFL 1.1 (resources/fonts/*\/OFL.txt).
+ */
+@font-face {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../../../fonts/outfit/outfit-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../../../fonts/outfit/outfit-latin-500-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../../../fonts/outfit/outfit-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../../../fonts/outfit/outfit-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Cinzel';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../../../fonts/cinzel/cinzel-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Cinzel';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../../../fonts/cinzel/cinzel-latin-700-normal.woff2') format('woff2');
+}
+
+@theme {
+    --font-display: 'Cinzel', serif;
+
+    --color-gold: #f5c542;
+    --color-gold-bright: #ffde74;
+    --color-gold-dim: #c9a84c;
+    --color-ivory: #f5f5f0;
+    --color-vault: #0a0a0a;
+    --color-side-table: #111111;
+    --color-card-wood: #1a1a1a;
+}
+
+/* Primary buttons: flat table gold with black text, brighter on hover (DESIGN.md button-primary). */
+html.fi .fi-btn.fi-color-primary:not(.fi-outlined) {
+    background-color: var(--color-gold);
+    color: var(--color-vault);
+
+    & > .fi-icon {
+        color: var(--color-vault);
+    }
+
+    &:not(.fi-disabled):not([disabled]):hover {
+        background-color: var(--color-gold-bright);
+    }
+}
+
+/* Counter screens: touch-friendly controls. */
+.kk-touch {
+    & .fi-btn {
+        @apply min-h-14 px-6 text-base;
+    }
+}
+
+/* Receipts print 80 mm wide and nothing else on the page prints. */
+.kk-receipt {
+    @apply mx-auto w-full max-w-[80mm] rounded-lg bg-white p-4 font-mono text-xs text-black;
+}
+
+@media print {
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    .kk-receipt,
+    .kk-receipt * {
+        visibility: visible;
+    }
+
+    .kk-receipt {
+        position: absolute;
+        inset: 0 auto auto 0;
+        width: 80mm;
+        max-width: none;
+        border-radius: 0;
+        padding: 4mm;
+    }
+}
