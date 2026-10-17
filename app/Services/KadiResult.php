@@ -107,6 +107,39 @@ final readonly class KadiResult
     }
 
     /**
+     * The `items` of a paged list (data.items), each an array.
+     *
+     * @return list<array<mixed>>
+     */
+    public function items(): array
+    {
+        $items = $this->data['items'] ?? null;
+
+        return is_array($items) ? array_values(array_filter($items, is_array(...))) : [];
+    }
+
+    /**
+     * The `pagination` of a paged list (data.pagination): page, per_page, total, last_page.
+     *
+     * @return array{page: int, per_page: int, total: int, last_page: int}|null
+     */
+    public function pagination(): ?array
+    {
+        $pagination = $this->data['pagination'] ?? null;
+
+        if (! is_array($pagination) || ! isset($pagination['page'], $pagination['per_page'], $pagination['total'])) {
+            return null;
+        }
+
+        return [
+            'page' => (int) $pagination['page'],
+            'per_page' => (int) $pagination['per_page'],
+            'total' => (int) $pagination['total'],
+            'last_page' => (int) ($pagination['last_page'] ?? 1),
+        ];
+    }
+
+    /**
      * A top-level field of the response next to `code` and `message`, e.g. `attempts_left`.
      */
     public function field(string $key): mixed

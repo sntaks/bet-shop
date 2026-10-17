@@ -29,5 +29,9 @@
         <dd class="text-right font-bold">{{ Format::money($load['net_amount'] ?? 0) }}</dd>
     </dl>
 
+    @if (($load['status'] ?? null) === 'reversed')
+        <p class="mt-3 border-t border-dashed border-black pt-2 text-center font-bold">REVERSED BY KADI KINGS {{ Format::dateTime($load['reversed_at'] ?? null) }}</p>
+    @endif
+
     <p class="mt-3 border-t border-dashed border-black pt-2 text-center">Loads cannot be undone at the shop. For a mistake, call Kadi Kings.</p>
 </div>

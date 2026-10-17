@@ -18,6 +18,7 @@ it('locks the session when the lock screen is opened', function () {
 });
 
 it('unlocks with the staff member\'s password and returns to the page they were on', function () {
+    $this->freezeTime();
     session(['url.intended' => route('filament.shop.pages.settings')]);
 
     Livewire::test(Unlock::class)

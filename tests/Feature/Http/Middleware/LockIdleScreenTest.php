@@ -21,6 +21,7 @@ it('locks the screen after the idle minutes in settings and keeps the page to re
 });
 
 it('keeps the screen open while the staff member is active', function () {
+    $this->freezeTime();
     Http::fake(['kadi.test/api/v1/shop/me' => Http::response(['success' => true, 'data' => shopMe()])]);
 
     $this->actingAs($this->cashier)
