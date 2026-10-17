@@ -18,4 +18,16 @@ return [
 
     'key' => env('KADI_SHOP_API_KEY'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Shop Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Dates are stored in the app timezone (UTC) and shown, filtered and sent
+    | to KadiApi (whose date filters are Nairobi days) in this one.
+    |
+    */
+
+    'timezone' => 'Africa/Nairobi',
+
 ];

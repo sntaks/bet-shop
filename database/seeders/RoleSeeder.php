@@ -18,6 +18,14 @@ class RoleSeeder extends Seeder
     public const string MANAGER = 'manager';
 
     /**
+     * @var array<string, string>
+     */
+    public const array LABELS = [
+        self::CASHIER => 'Cashier',
+        self::MANAGER => 'Manager',
+    ];
+
+    /**
      * @var array<string, list<string>>
      */
     public const array ROLES = [
